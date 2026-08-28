@@ -20,7 +20,7 @@ pip install -r requirements.txt
 
 ## Uso
 
-Hay dos formas de ejecutar el pipeline:
+Hay tres formas de ejecutar el pipeline:
 
 ### 1. Ejecutar el script principal
 
@@ -68,6 +68,24 @@ La función devuelve un `pandas.DataFrame` con las columnas:
 
 Además, como efecto secundario, guarda el archivo `results/predictions.csv` y la gráfica `results/forecast.png`.
 
+### 3. Ejecutar el watchdog automático (opcional)
+
+Si deseas que el sistema verifique automáticamente la aparición de nuevos datos y ejecute el pipeline sin intervención manual, puedes usar el script `src/auto_update.py`. Este script se ejecuta en segundo plano y, cada día entre el 1 y el 3 de cada mes, verifica si el CSV contiene datos para el mes actual. Si es así, ejecuta el pipeline y luego espera hasta el próximo día para evitar ejecuciones duplicadas.
+
+Para iniciar el watchdog:
+
+```bash
+nohup python src/auto_update.py &
+```
+
+Puedes ajustar la frecuencia de consulta mediante la variable de entorno `AUTO_UPDATE_INTERVAL_HOURS` (por defecto 24 horas). Por ejemplo, para consultar cada 6 horas durante los primeros días del mes:
+
+```bash
+AUTO_UPDATE_INTERVAL_HOURS=6 nohup python src/auto_update.py &
+```
+
+El watchdog seguirá ejecutándose hasta que lo detengas (por ejemplo, con `kill %1` o `pkill -f auto_update.py`).
+
 ## Cómo leer las predicciones
 
 Abre `results/predictions.csv` (o visualízalo directamente en GitHub). El archivo contiene cinco columnas:
@@ -104,7 +122,7 @@ Un valor **negativo** en `cumulative_inflation_pct` indicaría **deflación** (c
 
 ## Visualización
 
-Tras ejecutar `src/update.py` (o llamar a `run_predictions`), se genera una gráfica `results/forecast.png` que muestra:
+Tras ejecutar `src/update.py` (o llamar a `run_predictions` o dejar que `auto_update.py` lo haga), se genera una gráfica `results/forecast.png` que muestra:
 - El INPC histórico (línea azul).
 - Los puntos de pronóstico para los próximos 1, 2, 3 y 6 meses (marcadores rojos).
 - Líneas discontinuas que conectan el último punto histórico con cada predicción para visualizar la tendencia.
@@ -124,7 +142,8 @@ h3net/
 │   ├─ predict.py       # Lógica de predicción (usado por update.py y pipeline.py)
 │   ├─ plot.py          # Crea la gráfica de pronóstico
 │   ├─ update.py        # Orquestador del pipeline (uso desde línea de comandos)
-│   └─ pipeline.py      # Función `run_predictions` para uso programático
+│   ├─ pipeline.py      # Función `run_predictions` para uso programático
+│   └─ auto_update.py   # Watchdog automático que ejecuta el pipeline cuando aparecen nuevos datos
 ├─ models/              # Modelo entrenado y fecha de referencia (ventana de 3 años)
 │   ├─ linreg.pkl
 │   └─ linreg_baseline.txt
@@ -139,7 +158,7 @@ h3net/
 
 - **Cambiar el horizonte de predicción:** edita la lista `horizons = [1,2,3,6]` en `src/predict.py`.
 - **Agregar características (p. ej., estacionalidad):** modifica `src/preprocess.py`.
-- **Reemplazar el modelo:** usa otro algoritmo en `src/model.py` y ajusta `src/update.py` y `src/pipeline.py` según corresponda.
+- **Reemplazar el modelo:** usa otro algoritmo en `src/model.py` y ajusta `src/update.py`, `src/pipeline.py` y `src/auto_update.py` según corresponda.
 - **Utilizar tu propio CSV:** coloca el archivo con tus datos mensuales en `data/inpc_raw.csv` (debe tener columnas `date` y `inpc`). El script manejará la lectura, validación y estimación de meses faltantes.
 
 ## Licencia
