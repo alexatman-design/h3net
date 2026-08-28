@@ -4,7 +4,9 @@ Este proyecto recopila datos históricos del Índice Nacional de Precios al Cons
 
 ## Fuente de los datos
 
-El script actualmente obtiene los datos de la API del Banco Mundial (indicador `FP.CPI.TOTL` – Índice de precios al consumidor (2010 = 100)) para México. Si prefieres usar los datos oficiales del INEGI, reemplaza el enlace de descarga en `src/fetch_inpc.py` por el enlace CSV directo del INEGI.
+El proyecto **usa un archivo CSV local** que debe colocarse en la carpeta `data/` con el nombre `inpc_raw.csv`. Este archivo debe contener al menos dos columnas: `date` (fecha) y `inpc` (valor del índice). El modelo se entrena únicamente con los últimos **3 años** de datos disponibles, de modo que siempre se utiliza la información más reciente sin necesidad de descargar grandes volúmenes cada vez.
+
+Si deseas comenzar rápidamente, el repositorio ya incluye un archivo de ejemplo con datos sintéticos desde enero 2023 hasta el mes actual (ajustado automáticamente al ejecutar el script). Puedes reemplazarlo por los datos oficiales del INEGI cuando los tengas.
 
 ## Requisitos
 
@@ -23,35 +25,51 @@ python src/update.py
 ```
 
 Esto hará lo siguiente:
-1. Descargará los datos más recientes del INPC.
-2. Preprocesará los datos (garantizando frecuencia mensual).
-3. Entrenará un modelo de regresión lineal (tiempo como predictor).
-4. Generará predicciones para los próximos 1, 2, 3 y 6 meses.
-5. Guardará las predicciones en `results/predictions.csv`.
-6. (Opcional) Creará una gráfica simple del INPC histórico y el pronóstico guardada como `results/forecast.png`.
+1. Cargará y validará el CSV local (`data/inpc_raw.csv`).
+2. Preprocesará los datos (garantizando frecuencia mensual y rellenando posibles huecos).
+3. Seleccionará automáticamente los últimos 3 años de datos para entrenar el modelo.
+4. Entrenará un modelo de regresión lineal (tiempo como predictor).
+5. Generará predicciones para los próximos 1, 2, 3 y 6 meses.
+6. Guardará las predicciones en `results/predictions.csv`, incluyendo:
+   - `base_month`: mes del último INPC conocido (ej. 2026-08).
+   - `forecast_month`: mes objetivo de cada horizonte (ej. 2026-09 para 1 mes adelante).
+   - `predicted_inpc`: valor pronosticado del INPC para ese mes futuro.
+   - `cumulative_inflation_pct`: inflación (o deflación) acumulada esperada entre el `base_month` y el `forecast_month`, expresada en porcentaje.
+7. (Opcional) Creará una gráfica simple del INPC histórico y el pronóstico guardada como `results/forecast.png`.
 
 ## Cómo leer las predicciones
 
-Abre `results/predictions.csv` (o visualízalo directamente en GitHub). El archivo contiene tres columnas:
+Abre `results/predictions.csv` (o visualízalo directamente en GitHub). El archivo contiene cinco columnas:
 
 | Columna | Significado |
 |---------|-------------|
-| `horizon_months` | Número de meses hacia adelante para los que se realiza la predicción (1, 2, 3, 6). |
-| `predicted_inpc` | Valor pronosticado del índice INPC para ese mes futuro. |
-| `cumulative_inflation_pct` | Inflación (o deflación) acumulada esperada entre el último INPC conocido y el mes pronosticado, expresada en porcentaje. <br>Fórmula: <br>`((predicted_inpc / last_known_inpc) – 1) × 100` |
+| `horizon_months` | Número de meses hacia adelante para los que se hace la predicción (1, 2, 3, 6). |
+| `base_month` | Mes del último INPC conocido (formato YYYY-MM). Este es el mes de referencia desde el cual se calcula la inflación. |
+| `forecast_month` | Mes objetivo de la predicción (formato YYYY-MM). |
+| `predicted_inpc` | Valor pronosticado del INPC para ese mes futuro. |
+| `cumulative_inflation_pct` | Inflación (o deflación) acumulada esperada entre `base_month` y `forecast_month`, expresada en porcentaje. <br>Fórmula: <br>`((predicted_inpc / last_known_inpc) – 1) × 100` donde `last_known_inpc` es el valor del INPC en `base_month`. |
 
-- Un valor **negativo** de `cumulative_inflation_pct` indica que el modelo espera que el INPC disminuya (deflación) respecto a hoy.
-- Un valor **positivo** indica un aumento esperado de precios (inflación).
+### Ejemplo de interpretación
 
-### Ejemplo
-
-Si el último INPC conocido es 191.45 y el pronóstico para 1 mes adelante es 171.68, entonces:
+Supongamos que después de ejecutar el pipeline obtienes:
 
 ```
-inflación acumulada = (171.68 / 191.45 – 1) × 100 ≈ –10.33 %
+horizon_months,base_month,forecast_month,predicted_inpc,cumulative_inflation_pct
+1,2026-08,2026-09,116.442928,0.199583
+2,2026-08,2026-10,116.818959,0.523159
+3,2026-08,2026-11,117.194989,0.846734
+6,2026-08,2027-02,118.323079,1.817460
 ```
 
-Esto sugiere una **deflación del 10.33 %** durante el próximo mes.
+- **Último INPC conocido** (`base_month` = 2026-08) corresponde a **agosto 2026**.
+- La fila con `horizon_months = 1` te da el pronóstico para **septiembre 2026** (`forecast_month` = 2026-09):
+  - `predicted_inpc` = 116.44
+  - `cumulative_inflation_pct` = **+0.20 %**
+  → Se espera que entre agosto y septiembre de 2026 los precios suban aproximadamente **0,20 %**.
+- La fila con `horizon_months = 2` corresponde a **octubre 2026**, con una inflación acumulada esperada de **+0,52 %** respecto a agosto 2026.
+- Y así sucesivamente para 3 y 6 meses.
+
+Un valor **negativo** en `cumulative_inflation_pct` indicaría **deflación** (caída de precios) respecto al mes de referencia.
 
 ## Visualización
 
@@ -66,21 +84,20 @@ Puedes ver la imagen directamente en GitHub bajo `results/forecast.png` o descar
 
 ```
 h3net/
-├─ data/                # Datos descargados y procesados
-│   ├─ inpc_raw.csv     # Serie descargada
-│   └─ inpc_processed.csv# Serie mensual limpia
+├─ data/                # Aquí colocas tu CSV de INPC mensual
+│   └─ inpc_raw.csv     # CSV con columnas date,inpc (se sobrescribe al cargar)
 ├─ src/
-│   ├─ fetch_inpc.py    # Descarga los datos (API del Banco Mundial por defecto)
+│   ├─ fetch_inpc.py    # Valida y carga el CSV local (no descarga de internet)
 │   ├─ preprocess.py    # Asegura frecuencia mensual
 │   ├─ model.py         # Entrenamiento y carga del modelo de regresión lineal
 │   ├─ predict.py       # Lógica de predicción (usado por update.py)
 │   ├─ plot.py          # Crea la gráfica de pronóstico
 │   └─ update.py        # Orquestador del pipeline
-├─ models/              # Modelo entrenado y fecha de referencia
+├─ models/              # Modelo entrenado y fecha de referencia (ventana de 3 años)
 │   ├─ linreg.pkl
 │   └─ linreg_baseline.txt
 ├─ results/
-│   ├─ predictions.csv  # Tabla de pronósticos
+│   ├─ predictions.csv  # Tabla de pronósticos con meses de referencia y objetivo
 │   └─ forecast.png     # Gráfica (se crea después de la primera ejecución)
 ├─ notebooks/           # Análisis exploratorio opcional
 └─ requirements.txt
@@ -91,7 +108,7 @@ h3net/
 - **Cambiar el horizonte de predicción:** edita la lista `horizons = [1,2,3,6]` en `src/predict.py`.
 - **Agregar características (p. ej., estacionalidad):** modifica `src/preprocess.py`.
 - **Reemplazar el modelo:** usa otro algoritmo en `src/model.py` y ajusta `src/update.py` según corresponda.
-- **Utilizar datos oficiales del INEGI:** sustituye la URL en `src/fetch_inpc.py` por el enlace CSV directo del INEGI.
+- **Utilizar tu propio CSV:** coloca el archivo con tus datos mensuales en `data/inpc_raw.csv` (debe tener columnas `date` y `inpc`). El script manejará la lectura y validación.
 
 ## Licencia
 

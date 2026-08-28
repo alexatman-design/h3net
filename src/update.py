@@ -2,13 +2,15 @@
 """
 update.py: Orchestrates the full pipeline for INPC inflation prediction.
 Steps:
-1. Fetch raw INPC data (using fetch_inpc module).
-2. Preprocess to obtain monthly time series.
-3. Feature engineering: create numeric time index (months since start).
+1. Load local INPC data (CSV) – expected to be updated by user periodically.
+2. Keep only the last 3 years of data for training.
+3. Feature engineering: months since start of window.
 4. Train linear regression model (least squares) to predict INPC index.
 5. Predict future INPC values for next 1, 2, 3, 6 months.
 6. Compute cumulative inflation over each horizon.
-7. Save predictions to results/predictions.csv.
+7. Save predictions to results/predictions.csv with extra metadata:
+   - base_month: the month of the last known INPC (YYYY-MM)
+   - forecast_month: the target month for each horizon (YYYY-MM)
 8. Generate a simple forecast plot saved to results/forecast.png.
 """
 
@@ -20,7 +22,7 @@ from datetime import datetime
 from sklearn.linear_model import LinearRegression
 import joblib
 
-# Import our own fetch function
+# Import our own fetch function (now just a loader)
 sys.path.insert(0, os.path.join(os.path.dirname(__file__)))
 from fetch_inpc import fetch_inpc
 from plot import plot_forecast
@@ -38,48 +40,45 @@ for p in [os.path.dirname(RAW_PATH), os.path.dirname(PROCESSED_PATH),
           os.path.dirname(PLOT_PATH)]:
     os.makedirs(p, exist_ok=True)
 
-def fetch_inpc_data():
-    """Download INPC data using our fetch_inpc function."""
-    # Default URL – World Bank monthly CPI for Mexico
-    url = ("https://api.worldbank.org/v2/country/MEX/indicator/"
-           "FP.CPI.TOTL?format=json&date=2000:2025&frequency=M&per_page=5000")
-    fetch_inpc(url, RAW_PATH)
-    # Load the CSV we just saved
+def load_and_validate_data():
+    """Load CSV, ensure columns, parse dates, sort."""
+    if not os.path.exists(RAW_PATH):
+        print(f"Error: Expected data file not found at {RAW_PATH}")
+        print("Please place a CSV with columns 'date' and 'inpc' in the data/ directory.")
+        sys.exit(1)
     df = pd.read_csv(RAW_PATH)
-    # Expected columns: date, inpc
-    if 'date' not in df.columns or 'inpc' not in df.columns:
-        # If the CSV has different columns, try to adapt
-        # Assume first column is date, second is value
-        cols = df.columns.tolist()
-        if len(cols) >= 2:
-            df = df.rename(columns={cols[0]: 'date', cols[1]: 'inpc'})
+    # Standardize column names
+    cols = [c.strip().lower() for c in df.columns]
+    if 'date' not in cols or 'inpc' not in cols:
+        # Try to infer: first column date, second column value
+        if len(df.columns) >= 2:
+            df = df.rename(columns={df.columns[0]: 'date', df.columns[1]: 'inpc'})
         else:
-            print("CSV does not have enough columns")
+            print("CSV does not have enough columns (need at least date and value).")
             sys.exit(1)
-    # Convert date to datetime
+    # Parse dates
     df['date'] = pd.to_datetime(df['date'], errors='coerce')
     df = df.dropna(subset=['date'])
     df = df.sort_values('date')
-    # Save again (ensure clean)
+    # Save cleaned version (ensuring proper format)
     df.to_csv(RAW_PATH, index=False)
-    print(f"Saved raw data to {RAW_PATH} with {len(df)} rows")
+    print(f"Loaded and validated data from {RAW_PATH} with {len(df)} rows")
     return df
 
 def preprocess(df: pd.DataFrame):
-    """Ensure monthly frequency, fill missing if any."""
-    # We expect monthly data, but if there are gaps we resample.
+    """Ensure monthly frequency, forward fill missing months."""
     df = df.set_index('date')
-    # Resample to month start, taking the last observation
+    # Resample to month start, taking last observation
     df_monthly = df.resample('MS').last().reset_index()
-    # Forward fill any missing (should not happen with good data)
     df_monthly['inpc'] = df_monthly['inpc'].ffill()
     df_monthly.to_csv(PROCESSED_PATH, index=False)
     print(f"Saved processed data to {PROCESSED_PATH} with {len(df_monthly)} rows")
     return df_monthly
 
 def train_model(df: pd.DataFrame):
-    """Create feature: months since first date, train LinearRegression."""
+    """Create feature: months since window start, train LinearRegression."""
     df = df.copy()
+    # Use months since first date in the window
     df['months'] = (df['date'] - df['date'].iloc[0]).dt.days / 30.0
     X = df[['months']].values
     y = df['inpc'].values
@@ -87,7 +86,7 @@ def train_model(df: pd.DataFrame):
     model.fit(X, y)
     # Save model
     joblib.dump(model, MODEL_PATH)
-    # Also save the baseline date for later use
+    # Save baseline (window start date) for later use in prediction
     baseline = df['date'].iloc[0]
     baseline_path = MODEL_PATH.replace('.pkl', '_baseline.txt')
     with open(baseline_path, 'w') as f:
@@ -97,44 +96,49 @@ def train_model(df: pd.DataFrame):
 
 def predict_future(model, baseline: pd.Timestamp, last_inpc: float, last_date: pd.Timestamp, horizons=[1,2,3,6]):
     """Predict INPC for future months and compute cumulative inflation."""
-    # Compute months offset for last date
     last_months = (last_date - baseline).days / 30.0
-    predictions = {}
+    predictions = []
+    base_month_str = last_date.strftime('%Y-%m')
     for h in horizons:
         future_months = last_months + h
         pred_inpc = model.predict([[future_months]])[0]
-        # Cumulative inflation over h months: (pred_inpc / last_inpc - 1) * 100
         infl = (pred_inpc / last_inpc - 1) * 100.0
-        predictions[h] = {
+        forecast_date = last_date + pd.DateOffset(months=h)
+        forecast_month_str = forecast_date.strftime('%Y-%m')
+        predictions.append({
+            'horizon_months': h,
+            'base_month': base_month_str,
+            'forecast_month': forecast_month_str,
             'predicted_inpc': pred_inpc,
             'cumulative_inflation_pct': infl
-        }
+        })
     return predictions
 
 def main():
-    # Step 1: fetch
-    df_raw = fetch_inpc_data()
-    # Step 2: preprocess
-    df = preprocess(df_raw)
-    # Step 3: train
-    model, baseline = train_model(df)
-    # Step 4: predict
-    last_inpc = df['inpc'].iloc[-1]
-    last_date = df['date'].iloc[-1]
+    # Step 1: load data
+    df_raw = load_and_validate_data()
+    # Step 2: preprocess to monthly
+    df_monthly = preprocess(df_raw)
+    # Step 3: keep only last 3 years for training
+    max_date = df_monthly['date'].iloc[-1]
+    window_start = max_date - pd.DateOffset(years=3)
+    df_train = df_monthly[(df_monthly['date'] >= window_start) & (df_monthly['date'] <= max_date)].copy()
+    print(f"Training window: {window_start.date()} to {max_date.date()} ({len(df_train)} months)")
+    if len(df_train) < 2:
+        print("Not enough data in the last 3 years to train a model.")
+        sys.exit(1)
+    # Step 4: train model
+    model, baseline = train_model(df_train)
+    # Step 5: predict
+    last_inpc = df_monthly['inpc'].iloc[-1]
+    last_date = df_monthly['date'].iloc[-1]
     preds = predict_future(model, baseline, last_inpc, last_date, horizons=[1,2,3,6])
-    # Step 5: save predictions
-    rows = []
-    for h, vals in preds.items():
-        rows.append({
-            'horizon_months': h,
-            'predicted_inpc': vals['predicted_inpc'],
-            'cumulative_inflation_pct': vals['cumulative_inflation_pct']
-        })
-    preds_df = pd.DataFrame(rows)
+    # Step 6: save predictions
+    preds_df = pd.DataFrame(preds, columns=['horizon_months','base_month','forecast_month','predicted_inpc','cumulative_inflation_pct'])
     preds_df.to_csv(PREDS_PATH, index=False)
     print(f"Predictions saved to {PREDS_PATH}")
-    print(preds_df)
-    # Step 6: plot
+    print(preds_df.to_string(index=False))
+    # Step 7: plot
     plot_forecast(PROCESSED_PATH, PREDS_PATH, PLOT_PATH)
 
 if __name__ == "__main__":
