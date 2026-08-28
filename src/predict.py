@@ -15,7 +15,7 @@ def make_future_dates(last_date: pd.Timestamp, steps: int) -> list:
     """Return a list of future month-end dates for given steps."""
     return [last_date + pd.DateOffset(months=i) for i in range(1, steps+1)]
 
-def predict_inflation(model, last_cpi: float, last_date: pd.Timestamp, horizons=[1,2,3,6]) -> dict:
+def predict_inflation(model, last_cpi: float, last_date: pd.Timestamp, horizons=[1,2,3,6,12]) -> dict:
     """
     Predict CPI for future months and compute cumulative inflation over each horizon.
     Returns a dict mapping horizon (in months) to predicted inflation percent.

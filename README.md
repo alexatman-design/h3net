@@ -31,7 +31,7 @@ Esto hará lo siguiente:
 2. Preprocesará los datos (garantizando frecuencia mensual y rellenando posibles huecos).
 3. Seleccionará automáticamente los últimos 3 años de datos para entrenar el modelo.
 4. Entrenará un modelo de regresión lineal (tiempo como predictor).
-5. Generará predicciones para los próximos 1, 2, 3 y 6 meses.
+5. Generará predicciones para los próximos 1, 2, 3, 6 y 12 meses.
 6. Guardará las predicciones en `results/predictions.csv`, incluyendo:
    - `base_month`: mes del último INPC conocido (ej. 2026-08).
    - `forecast_month`: mes objetivo de cada horizonte (ej. 2026-09 para 1 mes adelante).
@@ -90,7 +90,7 @@ Abre `results/predictions.csv` (o visualízalo directamente en GitHub). El archi
 
 | Columna | Significado |
 |---------|-------------|
-| `horizon_months` | Número de meses hacia adelante para los que se hace la predicción (1, 2, 3, 6). |
+| `horizon_months` | Número de meses hacia adelante para los que se hace la predicción (1, 2, 3, 6 y 12). |
 | `base_month` | Mes del último INPC conocido (formato YYYY-MM). Este es el mes de referencia desde el cual se calcula la inflación. |
 | `forecast_month` | Mes objetivo de la predicción (formato YYYY-MM). |
 | `predicted_inpc` | Valor pronosticado del INPC para ese mes futuro. |

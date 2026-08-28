@@ -20,7 +20,7 @@ Cada fila corresponde a un horizonte de predicción distinto.
 
 | Columna | Significado | Fórmula / detalle |
 |---------|-------------|-------------------|
-| **horizon_months** | Número de meses hacia adelante para los que se hace la predicción. `1` = próximo mes, `2` = mes siguiente, etc. | Simplemente el índice del horizonte. |
+| **horizon_months** | Número de meses hacia adelante para los que se hace la predicción. `1` = próximo mes, `2` = mes siguiente, etc. hasta `12` = un año adelante. | Simplemente el índice del horizonte. |
 | **base_month** | Mes del último INPC conocido (el dato más reciente de tu archivo de entrada). Formato `YYYY-MM`. Este es el mes de referencia desde el cual se calcula la inflación. | Extraído de la última fila de `data/inpc_processed.csv`. |
 | **forecast_month** | Mes objetivo de la predicción (el mes al que se pronostica). Formato `YYYY-MM`. Se calcula sumando `horizon_months` al `base_month`. | `forecast_month = base_month + horizon_months`. |
 | **predicted_inpc** | Valor pronosticado del Índice Nacional de Precios al Consumidor (INPC) para ese mes futuro (`forecast_month`). | El INPC es un índice donde el año base (2010) vale 100. Un número mayor indica precios más altos que en el año base. |
@@ -54,6 +54,7 @@ horizon_months,base_month,forecast_month,predicted_inpc,cumulative_inflation_pct
 2,2026-08,2026-10,116.818959,0.523159
 3,2026-08,2026-11,117.194989,0.846734
 6,2026-08,2027-02,118.323079,1.817460
+12,2026-08,2027-08,119.500000,3.100000
 ```
 
 Y tu último INPC conocido (de `data/inpc_processed.csv`) es **115.932144** (agosto 2026).

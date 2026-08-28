@@ -56,7 +56,7 @@ def _train_model(df: pd.DataFrame):
     model.fit(X, y)
     return model, df_train['date'].iloc[0]  # baseline
 
-def _predict_future(model, baseline: pd.Timestamp, last_inpc: float, last_date: pd.Timestamp, horizons=[1,2,3,6]):
+def _predict_future(model, baseline: pd.Timestamp, last_inpc: float, last_date: pd.Timestamp, horizons=[1,2,3,6,12]):
     last_months = (last_date - baseline).days / 30.0
     predictions = []
     base_month_str = last_date.strftime('%Y-%m')

@@ -48,7 +48,7 @@ def load_and_update_data():
         print("Please place a CSV with columns 'date' and 'inpc' in the data/ directory.")
         sys.exit(1)
     # Use fetch_inpc to load/update and estimate missing months
-    fetch_inpc(RAW_PATH)
+    fetch_inpc("", RAW_PATH)
     df = pd.read_csv(RAW_PATH, parse_dates=['date'])
     # Standardize column names
     cols = [c.strip().lower() for c in df.columns]
@@ -105,7 +105,7 @@ def train_model(df: pd.DataFrame):
     print(f"Model saved to {MODEL_PATH}, baseline saved to {baseline_path}")
     return model, baseline
 
-def predict_future(model, baseline: pd.Timestamp, last_inpc: float, last_date: pd.Timestamp, horizons=[1,2,3,6]):
+def predict_future(model, baseline: pd.Timestamp, last_inpc: float, last_date: pd.Timestamp, horizons=[1,2,3,6,12]):
     """Predict INPC for future months and compute cumulative inflation."""
     last_months = (last_date - baseline).days / 30.0
     predictions = []
@@ -143,7 +143,7 @@ def main():
     # Step 5: predict
     last_inpc = df_monthly['inpc'].iloc[-1]
     last_date = df_monthly['date'].iloc[-1]
-    preds = predict_future(model, baseline, last_inpc, last_date, horizons=[1,2,3,6])
+    preds = predict_future(model, baseline, last_inpc, last_date, horizons=[1,2,3,6,12])
     # Step 6: save predictions
     preds_df = pd.DataFrame(preds, columns=['horizon_months','base_month','forecast_month','predicted_inpc','cumulative_inflation_pct'])
     preds_df.to_csv(PREDS_PATH, index=False)
