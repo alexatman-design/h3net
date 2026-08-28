@@ -2,7 +2,7 @@
 pipeline.py: Self-contained function to run the INPC prediction pipeline.
 Provides `run_predictions(csv_path=None)` which loads the CSV, preprocesses,
 trains a linear regression model on the last 3 years, predicts the next
-1, 2, 3, and 6 months, and saves the results to `results/predictions.csv`
+1, 2, 3, 6, and 12 months, and saves the results to `results/predictions.csv`
 and a plot to `results/forecast.png`.
 
 If `csv_path` is None, defaults to "data/inpc_raw.csv".
@@ -132,7 +132,7 @@ def run_predictions(csv_path: str = None):
     # 4. Predict
     last_inpc = df_monthly['inpc'].iloc[-1]
     last_date = df_monthly['date'].iloc[-1]
-    preds = _predict_future(model, baseline, last_inpc, last_date, horizons=[1,2,3,6])
+    preds = _predict_future(model, baseline, last_inpc, last_date, horizons=[1,2,3,6,12])
     # Define output paths relative to this file
     base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
     preds_csv = os.path.join(base_dir, 'results', 'predictions.csv')
