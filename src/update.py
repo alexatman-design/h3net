@@ -3,6 +3,7 @@
 update.py: Orchestrates the full pipeline for INPC inflation prediction.
 Steps:
 1. Load local INPC data (CSV) – expected to be updated by user periodically.
+   The fetch_inpc function will estimate missing months if needed.
 2. Keep only the last 3 years of data for training.
 3. Feature engineering: months since start of window.
 4. Train linear regression model (least squares) to predict INPC index.
@@ -22,7 +23,7 @@ from datetime import datetime
 from sklearn.linear_model import LinearRegression
 import joblib
 
-# Import our own fetch function (now just a loader)
+# Import our own fetch function (now just a loader/estimator)
 sys.path.insert(0, os.path.join(os.path.dirname(__file__)))
 from fetch_inpc import fetch_inpc
 from plot import plot_forecast
@@ -40,13 +41,15 @@ for p in [os.path.dirname(RAW_PATH), os.path.dirname(PROCESSED_PATH),
           os.path.dirname(PLOT_PATH)]:
     os.makedirs(p, exist_ok=True)
 
-def load_and_validate_data():
-    """Load CSV, ensure columns, parse dates, sort."""
+def load_and_update_data():
+    """Load CSV, estimate missing months if needed, ensure columns, parse dates, sort."""
     if not os.path.exists(RAW_PATH):
         print(f"Error: Expected data file not found at {RAW_PATH}")
         print("Please place a CSV with columns 'date' and 'inpc' in the data/ directory.")
         sys.exit(1)
-    df = pd.read_csv(RAW_PATH)
+    # Use fetch_inpc to load/update and estimate missing months
+    fetch_inpc(RAW_PATH)
+    df = pd.read_csv(RAW_PATH, parse_dates=['date'])
     # Standardize column names
     cols = [c.strip().lower() for c in df.columns]
     if 'date' not in cols or 'inpc' not in cols:
@@ -56,6 +59,11 @@ def load_and_validate_data():
         else:
             print("CSV does not have enough columns (need at least date and value).")
             sys.exit(1)
+    # Ensure estimated column exists
+    if 'estimated' not in df.columns:
+        df['estimated'] = False
+    else:
+        df['estimated'] = df['estimated'].fillna(False).astype(bool)
     # Parse dates
     df['date'] = pd.to_datetime(df['date'], errors='coerce')
     df = df.dropna(subset=['date'])
@@ -63,6 +71,9 @@ def load_and_validate_data():
     # Save cleaned version (ensuring proper format)
     df.to_csv(RAW_PATH, index=False)
     print(f"Loaded and validated data from {RAW_PATH} with {len(df)} rows")
+    if df['estimated'].any():
+        est_count = df['estimated'].sum()
+        print(f"Warning: {est_count} row(s) are estimated (flagged). Replace with official data when available.")
     return df
 
 def preprocess(df: pd.DataFrame):
@@ -115,8 +126,8 @@ def predict_future(model, baseline: pd.Timestamp, last_inpc: float, last_date: p
     return predictions
 
 def main():
-    # Step 1: load data
-    df_raw = load_and_validate_data()
+    # Step 1: load/update data
+    df_raw = load_and_update_data()
     # Step 2: preprocess to monthly
     df_monthly = preprocess(df_raw)
     # Step 3: keep only last 3 years for training
