@@ -1,99 +1,98 @@
-# h3net - INPC Inflation Prediction Project
+# h3net - Proyecto de predicción de inflación INPC
 
-This project collects historical INPC (Índice Nacional de Precios al Consumidor) data, trains a simple linear regression model (least squares), and predicts inflation for the next monthly, bimonthly, quarterly, and semester periods.
+Este proyecto recopila datos históricos del Índice Nacional de Precios al Consumidor (INPC), entrena un modelo de regresión lineal simple (mínimos cuadrados) y predice la inflación para los próximos períodos mensual, bimestral, trimestral y semestral.
 
-## Data Source
+## Fuente de los datos
 
-The script currently fetches data from the World Bank API (indicator `FP.CPI.TOTL` – Consumer price index (2010 = 100)) for Mexico. If you prefer to use official INEGI data, replace the download URL in `src/fetch_inpc.py` with the direct CSV link from INEGI.
+El script actualmente obtiene los datos de la API del Banco Mundial (indicador `FP.CPI.TOTL` – Índice de precios al consumidor (2010 = 100)) para México. Si prefieres usar los datos oficiales del INEGI, reemplaza el enlace de descarga en `src/fetch_inpc.py` por el enlace CSV directo del INEGI.
 
-## Requirements
+## Requisitos
 
-Install dependencies:
+Instala las dependencias:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-## Usage
+## Uso
 
-Run the full update pipeline:
+Ejecuta el pipeline completo:
 
 ```bash
 python src/update.py
 ```
 
-This will:
-1. Download the latest INPC data.
-2. Preprocess (ensure monthly frequency).
-3. Fit a linear regression model (time as predictor).
-4. Generate predictions for the next 1, 2, 3, and 6 months.
-5. Save predictions to `results/predictions.csv`.
-6. (Optional) Create a simple line plot of the historical INPC and forecast saved as `results/forecast.png`.
+Esto hará lo siguiente:
+1. Descargará los datos más recientes del INPC.
+2. Preprocesará los datos (garantizando frecuencia mensual).
+3. Entrenará un modelo de regresión lineal (tiempo como predictor).
+4. Generará predicciones para los próximos 1, 2, 3 y 6 meses.
+5. Guardará las predicciones en `results/predictions.csv`.
+6. (Opcional) Creará una gráfica simple del INPC histórico y el pronóstico guardada como `results/forecast.png`.
 
-## How to read the predictions
+## Cómo leer las predicciones
 
-Open `results/predictions.csv` (or view it directly on GitHub). The file contains three columns:
+Abre `results/predictions.csv` (o visualízalo directamente en GitHub). El archivo contiene tres columnas:
 
-| Column | Meaning |
-|--------|---------|
-| `horizon_months` | Number of months ahead for which the prediction is made (1, 2, 3, 6). |
-| `predicted_inpc` | Forecasted value of the INPC index for that future month. |
-| `cumulative_inflation_pct` | Expected **cumulative inflation (or deflation)** between the last known INPC and the forecasted month, expressed as a percentage. <br>Formula: <br>`((predicted_inpc / last_known_inpc) – 1) × 100` |
+| Columna | Significado |
+|---------|-------------|
+| `horizon_months` | Número de meses hacia adelante para los que se realiza la predicción (1, 2, 3, 6). |
+| `predicted_inpc` | Valor pronosticado del índice INPC para ese mes futuro. |
+| `cumulative_inflation_pct` | Inflación (o deflación) acumulada esperada entre el último INPC conocido y el mes pronosticado, expresada en porcentaje. <br>Fórmula: <br>`((predicted_inpc / last_known_inpc) – 1) × 100` |
 
-- A **negative** `cumulative_inflation_pct` indicates the model expects the INPC to fall (deflation) relative to today.
-- A **positive** value indicates expected price increase (inflation).
+- Un valor **negativo** de `cumulative_inflation_pct` indica que el modelo espera que el INPC disminuya (deflación) respecto a hoy.
+- Un valor **positivo** indica un aumento esperado de precios (inflación).
 
-### Example
+### Ejemplo
 
-If the last known INPC is 191.45 and the forecast for 1 month ahead is 171.68, then:
+Si el último INPC conocido es 191.45 y el pronóstico para 1 mes adelante es 171.68, entonces:
 
 ```
-cumulative_inflation = (171.68 / 191.45 – 1) × 100 ≈ –10.33 %
+inflación acumulada = (171.68 / 191.45 – 1) × 100 ≈ –10.33 %
 ```
 
-This suggests a **10.33 % deflation** over the next month.
+Esto sugiere una **deflación del 10.33 %** durante el próximo mes.
 
-## Visualization
+## Visualización
 
-After running `src/update.py`, a plot `results/forecast.png` is generated showing:
+Tras ejecutar `src/update.py`, se genera una gráfica `results/forecast.png` que muestra:
+- El INPC histórico (línea azul).
+- Los puntos de pronóstico para los próximos 1, 2, 3 y 6 meses (marcadores rojos).
+- Líneas discontinuas que conectan el último punto histórico con cada predicción para visualizar la tendencia.
 
-- Historical INPC (blue line).
-- Point forecasts for the next 1, 2, 3, and 6 months (red markers).
-- A dashed line connecting the last historical point to each forecast to visualise the trend.
+Puedes ver la imagen directamente en GitHub bajo `results/forecast.png` o descargarla.
 
-You can view the image directly on GitHub under `results/forecast.png` or download it.
-
-## Project Structure
+## Estructura del proyecto
 
 ```
 h3net/
-├─ data/                # Raw and processed data
-│   ├─ inpc_raw.csv     # Downloaded series
-│   └─ inpc_processed.csv# Cleaned monthly series
+├─ data/                # Datos descargados y procesados
+│   ├─ inpc_raw.csv     # Serie descargada
+│   └─ inpc_processed.csv# Serie mensual limpia
 ├─ src/
-│   ├─ fetch_inpc.py    # Download data (World Bank API by default)
-│   ├─ preprocess.py    # Ensure monthly frequency
-│   ├─ model.py         # Linear regression training / loading
-│   ├─ predict.py       # Prediction logic (used by update.py)
-│   ├─ plot.py          # Create forecast plot
-│   └─ update.py        # Orchestrates the pipeline
-├─ models/              # Trained model and baseline date
+│   ├─ fetch_inpc.py    # Descarga los datos (API del Banco Mundial por defecto)
+│   ├─ preprocess.py    # Asegura frecuencia mensual
+│   ├─ model.py         # Entrenamiento y carga del modelo de regresión lineal
+│   ├─ predict.py       # Lógica de predicción (usado por update.py)
+│   ├─ plot.py          # Crea la gráfica de pronóstico
+│   └─ update.py        # Orquestador del pipeline
+├─ models/              # Modelo entrenado y fecha de referencia
 │   ├─ linreg.pkl
 │   └─ linreg_baseline.txt
 ├─ results/
-│   ├─ predictions.csv  # Forecast table
-│   └─ forecast.png     # Visualisation (created after first run)
-├─ notebooks/           # Optional exploratory analysis
+│   ├─ predictions.csv  # Tabla de pronósticos
+│   └─ forecast.png     # Gráfica (se crea después de la primera ejecución)
+├─ notebooks/           # Análisis exploratorio opcional
 └─ requirements.txt
 ```
 
-## Customization
+## Personalización
 
-- **Change prediction horizon:** edit the list `horizons = [1,2,3,6]` in `src/predict.py`.
-- **Add features (e.g., seasonality):** modify `src/preprocess.py`.
-- **Replace the model:** use a different algorithm in `src/model.py` and adjust `src/update.py` accordingly.
-- **Use official INEGI data:** replace the URL in `src/fetch_inpc.py` with the direct CSV link from INEGI.
+- **Cambiar el horizonte de predicción:** edita la lista `horizons = [1,2,3,6]` en `src/predict.py`.
+- **Agregar características (p. ej., estacionalidad):** modifica `src/preprocess.py`.
+- **Reemplazar el modelo:** usa otro algoritmo en `src/model.py` y ajusta `src/update.py` según corresponda.
+- **Utilizar datos oficiales del INEGI:** sustituye la URL en `src/fetch_inpc.py` por el enlace CSV directo del INEGI.
 
-## License
+## Licencia
 
 MIT
