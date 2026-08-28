@@ -14,6 +14,7 @@ horizon_months,base_month,forecast_month,predicted_inpc,cumulative_inflation_pct
 2,2026-08,2026-10,116.818959,0.523159
 3,2026-08,2026-11,117.194989,0.846734
 6,2026-08,2027-02,118.323079,1.817460
+12,2026-08,2027-08,120.579259,3.758912
 ```
 
 Cada fila corresponde a un horizonte de predicción distinto.
@@ -54,7 +55,7 @@ horizon_months,base_month,forecast_month,predicted_inpc,cumulative_inflation_pct
 2,2026-08,2026-10,116.818959,0.523159
 3,2026-08,2026-11,117.194989,0.846734
 6,2026-08,2027-02,118.323079,1.817460
-12,2026-08,2027-08,119.500000,3.100000
+12,2026-08,2027-08,120.579259,3.758912
 ```
 
 Y tu último INPC conocido (de `data/inpc_processed.csv`) es **115.932144** (agosto 2026).
@@ -81,6 +82,11 @@ Y tu último INPC conocido (de `data/inpc_processed.csv`) es **115.932144** (ago
 - `forecast_month` = 2027-02  
 - Inflación acumulada = 1.817460 %  
   Esperado aumento entre **agosto de 2026 y febrero de 2027** de **1,82 %**.
+
+### Fila 5 – Predicción anual (agosto 2027)
+- `forecast_month` = 2027-08  
+- Inflación acumulada = 3.758912 %  
+  Esperado aumento entre **agosto de 2026 y agosto de 2027** de **3,76 %**.
 
 ---
 
@@ -110,7 +116,7 @@ Interpretación: se espera que el INPC baje un **1,23 %** en el próximo mes (
 El pipeline también genera `results/forecast.png`. Esta imagen muestra:
 
 - Línea azul: evolución histórica del INPC (desde la fecha más antigua de tu dataset hasta el último mes conocido, es decir, el `base_month`).
-- Puntos rojos: valores pronosticados para cada horizonte (1, 2, 3, 6 meses) correspondientes a cada `forecast_month`.
+- Puntos rojos: valores pronosticados para cada horizonte (1, 2, 3, 6 y 12 meses) correspondientes a cada `forecast_month`.
 - Líneas discontinuas rojas: conectan el último punto histórico (`base_month`) con cada predicción para visualizar la tendencia.
 
 Puedes abrir este archivo directamente desde GitHub (en la carpeta `results/`) o descargarlo para verlo con cualquier visor de imágenes.

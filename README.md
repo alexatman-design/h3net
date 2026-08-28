@@ -1,6 +1,6 @@
 # h3net - Proyecto de predicción de inflación INPC
 
-Este proyecto recopila datos históricos del Índice Nacional de Precios al Consumidor (INPC), entrena un modelo de regresión lineal simple (mínimos cuadrados) y predice la inflación para los próximos períodos mensual, bimestral, trimestral y semestral.
+Este proyecto recopila datos históricos del Índice Nacional de Precios al Consumidor (INPC), entrena un modelo de regresión lineal simple (mínimos cuadrados) y predice la inflación para los próximos períodos mensual, bimestral, trimestral, semestral y anual (hasta 12 meses).
 
 ## Fuente de los datos
 
@@ -106,6 +106,7 @@ horizon_months,base_month,forecast_month,predicted_inpc,cumulative_inflation_pct
 2,2026-08,2026-10,116.818959,0.523159
 3,2026-08,2026-11,117.194989,0.846734
 6,2026-08,2027-02,118.323079,1.817460
+12,2026-08,2027-08,120.579259,3.758912
 ```
 
 - **Último INPC conocido** (`base_month` = 2026-08) corresponde a **agosto 2026**.
@@ -114,7 +115,9 @@ horizon_months,base_month,forecast_month,predicted_inpc,cumulative_inflation_pct
   - `cumulative_inflation_pct` = **+0.20 %**
   → Se espera que entre agosto y septiembre de 2026 los precios suban aproximadamente **0,20 %**.
 - La fila con `horizon_months = 2` corresponde a **octubre 2026**, con una inflación acumulada esperada de **+0,52 %** respecto a agosto 2026.
-- Y así sucesivamente para 3 y 6 meses.
+- La fila con `horizon_months = 3` corresponde a **noviembre 2026**, con una inflación acumulada esperada de **+0,85 %** respecto a agosto 2026.
+- La fila con `horizon_months = 6` corresponde a **febrero 2027**, con una inflación acumulada esperada de **+1,82 %** respecto a agosto 2026.
+- La fila con `horizon_months = 12` corresponde a **agosto 2027**, con una inflación acumulada esperada de **+3,76 %** respecto a agosto 2026.
 
 Un valor **negativo** en `cumulative_inflation_pct` indicaría **deflación** (caída de precios) respecto al mes de referencia.
 
@@ -122,7 +125,7 @@ Un valor **negativo** en `cumulative_inflation_pct` indicaría **deflación** (c
 
 Tras ejecutar `src/update.py` (o llamar a `run_predictions` o dejar que `auto_update.py` lo haga), se genera una gráfica `results/forecast.png` que muestra:
 - El INPC histórico (línea azul).
-- Los puntos de pronóstico para los próximos 1, 2, 3 y 6 meses (marcadores rojos).
+- Los puntos de pronóstico para los próximos 1, 2, 3, 6 y 12 meses (marcadores rojos).
 - Líneas discontinuas que conectan el último punto histórico con cada predicción para visualizar la tendencia.
 
 Puedes ver la imagen directamente en GitHub bajo `results/forecast.png` o descargarla.
@@ -154,7 +157,7 @@ h3net/
 
 ## Personalización
 
-- **Cambiar el horizonte de predicción:** edita la lista `horizons = [1,2,3,6]` en `src/predict.py`.
+- **Cambiar el horizonte de predicción:** edita la lista `horizons = [1,2,3,6,12]` en `src/predict.py`, `src/pipeline.py` y `src/update.py`.
 - **Agregar características (p. ej., estacionalidad):** modifica `src/preprocess.py`.
 - **Reemplazar el modelo:** usa otro algoritmo en `src/model.py` y ajusta `src/update.py`, `src/pipeline.py` y `src/auto_update.py` según corresponda.
 - **Utilizar tu propio CSV:** coloca el archivo con tus datos mensuales en `data/inpc_raw.csv` (debe tener columnas `date` y `inpc`). El script manejará la lectura, validación y estimación de meses faltantes.
