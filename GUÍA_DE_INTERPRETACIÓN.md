@@ -9,11 +9,11 @@ Este documento explica paso a paso cómo leer y entender la tabla de resultados 
 Después de correr `python src/update.py` obtendrás un archivo con esta estructura:
 
 ```
-horizon_months,predicted_inpc,cumulative_inflation_pct
-1,116.377280,0.143093
-2,116.748670,0.462675
-3,117.120060,0.782258
-6,118.234231,1.741006
+horizon_months,base_month,forecast_month,predicted_inpc,cumulative_inflation_pct
+1,2026-08,2026-09,116.442928,0.199583
+2,2026-08,2026-10,116.818959,0.523159
+3,2026-08,2026-11,117.194989,0.846734
+6,2026-08,2027-02,118.323079,1.817460
 ```
 
 Cada fila corresponde a un horizonte de predicción distinto.
@@ -21,8 +21,10 @@ Cada fila corresponde a un horizonte de predicción distinto.
 | Columna | Significado | Fórmula / detalle |
 |---------|-------------|-------------------|
 | **horizon_months** | Número de meses hacia adelante para los que se hace la predicción. `1` = próximo mes, `2` = mes siguiente, etc. | Simplemente el índice del horizonte. |
-| **predicted_inpc** | Valor pronosticado del Índice Nacional de Precios al Consumidor (INPC) para ese mes futuro. | El INPC es un índice donde el año base (2010) vale 100. Un número mayor indica precios más altos que en el año base. |
-| **cumulative_inflation_pct** | Inflación (o deflación) acumulada esperada entre el **último INPC conocido** (el último dato de tu archivo de entrada) y el mes del horizonte, expresada en porcentaje. | `((predicted_inpc / last_known_inpc) – 1) × 100` |
+| **base_month** | Mes del último INPC conocido (el dato más reciente de tu archivo de entrada). Formato `YYYY-MM`. Este es el mes de referencia desde el cual se calcula la inflación. | Extraído de la última fila de `data/inpc_processed.csv`. |
+| **forecast_month** | Mes objetivo de la predicción (el mes al que se pronostica). Formato `YYYY-MM`. Se calcula sumando `horizon_months` al `base_month`. | `forecast_month = base_month + horizon_months`. |
+| **predicted_inpc** | Valor pronosticado del Índice Nacional de Precios al Consumidor (INPC) para ese mes futuro (`forecast_month`). | El INPC es un índice donde el año base (2010) vale 100. Un número mayor indica precios más altos que en el año base. |
+| **cumulative_inflation_pct** | Inflación (o deflación) acumulada esperada entre el **`base_month`** y el **`forecast_month`**, expresada en porcentaje. | `((predicted_inpc / last_known_inpc) – 1) × 100` donde `last_known_inpc` es el valor real del INPC en `base_month`. |
 
 ---
 
@@ -38,7 +40,7 @@ Ejemplo de salida:
 ```
 2026-08-01,115.932144
 ```
-En este caso el último INPC conocido es **115.93** (agosto 2026).
+En este caso el último INPC conocido es **115.93** (agosto 2026) y aparecerá como `base_month = 2026-08` en la tabla.
 
 ---
 
@@ -47,46 +49,48 @@ En este caso el último INPC conocido es **115.93** (agosto 2026).
 Supongamos que después de ejecutar el pipeline obtienes:
 
 ```
-horizon_months,predicted_inpc,cumulative_inflation_pct
-1,116.377280,0.143093
-2,116.748670,0.462675
-3,117.120060,0.782258
-6,118.234231,1.741006
+horizon_months,base_month,forecast_month,predicted_inpc,cumulative_inflation_pct
+1,2026-08,2026-09,116.442928,0.199583
+2,2026-08,2026-10,116.818959,0.523159
+3,2026-08,2026-11,117.194989,0.846734
+6,2026-08,2027-02,118.323079,1.817460
 ```
 
 Y tu último INPC conocido (de `data/inpc_processed.csv`) es **115.932144** (agosto 2026).
 
 ### Fila 1 – Predicción mensual (septiembre 2026)
-- `predicted_inpc` = 116.377280  
-- Inflación acumulada = 0.143093 %  
-  Esto significa que el modelo espera que entre **agosto y septiembre de 2026** los precios suban aproximadamente **0,14 %**.  
-  En términos prácticos: si una canasta de bienes costaba $100 en agosto, se espera que cueste alrededor de **$100.14** en septiembre.
+- `base_month` = 2026-08 (agosto 2026)  
+- `forecast_month` = 2026-09 (septiembre 2026)  
+- `predicted_inpc` = 116.442928  
+- Inflación acumulada = 0.199583 %  
+  Esto significa que el modelo espera que entre **agosto y septiembre de 2026** los precios suban aproximadamente **0,20 %**.  
+  En términos prácticos: si una canasta de bienes costaba $100 en agosto, se espera que cueste alrededor de **$100.20** en septiembre.
 
 ### Fila 2 – Predicción bimestral (octubre 2026)
-- `predicted_inpc` = 116.748670  
-- Inflación acumulada = 0.462675 %  
-  Esperado aumento de precios entre **agosto y octubre de 2026** de **0,46 %**.
+- `forecast_month` = 2026-10  
+- Inflación acumulada = 0.523159 %  
+  Esperado aumento de precios entre **agosto y octubre de 2026** de **0,52 %**.
 
 ### Fila 3 – Predicción trimestral (noviembre 2026)
-- `predicted_inpc` = 117.120060  
-- Inflación acumulada = 0.782258 %  
-  Esperado aumento entre **agosto y noviembre de 2026** de **0,78 %**.
+- `forecast_month` = 2026-11  
+- Inflación acumulada = 0.846734 %  
+  Esperado aumento entre **agosto y noviembre de 2026** de **0,85 %**.
 
 ### Fila 4 – Predicción semestral (febrero 2027)
-- `predicted_inpc` = 118.234231  
-- Inflación acumulada = 1.741006 %  
-  Esperado aumento entre **agosto de 2026 y febrero de 2027** de **1,74 %**.
+- `forecast_month` = 2027-02  
+- Inflación acumulada = 1.817460 %  
+  Esperado aumento entre **agosto de 2026 y febrero de 2027** de **1,82 %**.
 
 ---
 
 ## 4. Qué significa un valor negativo
 
-Si la columna `cumulative_inflation_pct` muestra un número **negativo**, el modelo predice una **deflación** (caída de precios) respecto al último mes conocido.
+Si la columna `cumulative_inflation_pct` muestra un número **negativo**, el modelo predice una **deflación** (caída de precios) respecto al `base_month`.
 
 Ejemplo:
 ```
-horizon_months,predicted_inpc,cumulative_inflation_pct
-1,114.50,-1.23
+horizon_months,base_month,forecast_month,predicted_inpc,cumulative_inflation_pct
+1,2026-08,2026-09,114.50,-1.23
 ```
 Interpretación: se espera que el INPC baje un **1,23 %** en el próximo mes (deflación leve).
 
@@ -104,9 +108,9 @@ Interpretación: se espera que el INPC baje un **1,23 %** en el próximo mes (
 
 El pipeline también genera `results/forecast.png`. Esta imagen muestra:
 
-- Línea azul: evolución histórica del INPC (desde la fecha más antigua de tu dataset hasta el último mes conocido).
-- Puntos rojos: valores pronosticados para cada horizonte (1, 2, 3, 6 meses).
-- Líneas discontinuas rojas: conectan el último punto histórico con cada predicción para visualizar la tendencia.
+- Línea azul: evolución histórica del INPC (desde la fecha más antigua de tu dataset hasta el último mes conocido, es decir, el `base_month`).
+- Puntos rojos: valores pronosticados para cada horizonte (1, 2, 3, 6 meses) correspondientes a cada `forecast_month`.
+- Líneas discontinuas rojas: conectan el último punto histórico (`base_month`) con cada predicción para visualizar la tendencia.
 
 Puedes abrir este archivo directamente desde GitHub (en la carpeta `results/`) o descargarlo para verlo con cualquier visor de imágenes.
 
@@ -116,11 +120,12 @@ Puedes abrir este archivo directamente desde GitHub (en la carpeta `results/`) o
 
 1. **Ejecuta** `python src/update.py` (una vez que tienes los datos en `data/`).  
 2. **Abre** `results/predictions.csv`.  
-3. Mira la fila con `horizon_months = 1` → eso es el pronóstico para el **próximo mes**.  
-4. La columna `cumulative_inflation_pct` te dice cuánto se espera que suban o bajen los precios en porcentaje respecto a hoy.  
-5. Si el número es positivo → precios subirán (inflación).  
+3. Mira la fila con `horizon_months = 1` → eso es el pronóstico para el **próximo mes** (`forecast_month`).  
+4. La columna `base_month` te indica de qué mes se parte (último dato conocido).  
+5. La columna `cumulative_inflation_pct` te dice cuánto se espera que suban o bajen los precios en porcentaje entre esos dos meses.  
+6. Si el número es positivo → precios subirán (inflación).  
    Si es negativo → precios bajarán (deflación).  
-6. Usa la gráfica `forecast.png` para ver la tendencia completa.
+7. Usa la gráfica `forecast.png` para ver la tendencia completa.
 
 ---
 
