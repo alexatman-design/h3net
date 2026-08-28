@@ -9,6 +9,7 @@ Steps:
 5. Predict future INPC values for next 1, 2, 3, 6 months.
 6. Compute cumulative inflation over each horizon.
 7. Save predictions to results/predictions.csv.
+8. Generate a simple forecast plot saved to results/forecast.png.
 """
 
 import os
@@ -22,22 +23,27 @@ import joblib
 # Import our own fetch function
 sys.path.insert(0, os.path.join(os.path.dirname(__file__)))
 from fetch_inpc import fetch_inpc
+from plot import plot_forecast
 
 # Paths
 RAW_PATH = os.path.join("data", "inpc_raw.csv")
 PROCESSED_PATH = os.path.join("data", "inpc_processed.csv")
 MODEL_PATH = os.path.join("models", "linreg.pkl")
 PREDS_PATH = os.path.join("results", "predictions.csv")
+PLOT_PATH = os.path.join("results", "forecast.png")
 
 # Ensure directories exist
 for p in [os.path.dirname(RAW_PATH), os.path.dirname(PROCESSED_PATH),
-          os.path.dirname(MODEL_PATH), os.path.dirname(PREDS_PATH)]:
+          os.path.dirname(MODEL_PATH), os.path.dirname(PREDS_PATH),
+          os.path.dirname(PLOT_PATH)]:
     os.makedirs(p, exist_ok=True)
 
 def fetch_inpc_data():
     """Download INPC data using our fetch_inpc function."""
-    # Use the default URL from fetch_inpc (which is World Bank monthly CPI)
-    fetch_inpc(RAW_PATH)
+    # Default URL – World Bank monthly CPI for Mexico
+    url = ("https://api.worldbank.org/v2/country/MEX/indicator/"
+           "FP.CPI.TOTL?format=json&date=2000:2025&frequency=M&per_page=5000")
+    fetch_inpc(url, RAW_PATH)
     # Load the CSV we just saved
     df = pd.read_csv(RAW_PATH)
     # Expected columns: date, inpc
@@ -128,6 +134,8 @@ def main():
     preds_df.to_csv(PREDS_PATH, index=False)
     print(f"Predictions saved to {PREDS_PATH}")
     print(preds_df)
+    # Step 6: plot
+    plot_forecast(PROCESSED_PATH, PREDS_PATH, PLOT_PATH)
 
 if __name__ == "__main__":
     main()
