@@ -6,9 +6,9 @@ Este proyecto recopila datos históricos del Índice Nacional de Precios al Cons
 
 El proyecto **usa un archivo CSV local** que debe colocarse en la carpeta `data/` con el nombre `inpc_raw.csv`. Este archivo debe contener al menos dos columnas: `date` (fecha) y `inpc` (valor del índice). El modelo se entrena únicamente con los últimos **3 años** de datos disponibles, de modo que siempre se utiliza la información más reciente sin necesidad de descargar grandes volúmenes cada vez.
 
-Si el archivo CSV no tiene datos para el mes actual (o tiene lagunas), el script `src/fetch_inpc.py` estimará automáticamente los meses faltantes utilizando el cambio mensual promedio de los datos existentes y marcará esas filas como **estimadas** (columna `estimated = True`). Se recomienda reemplazar esas filas estimadas con los datos oficiales del INEGI cuando estén disponibles.
+Si el archivo CSV no tiene datos para el mes actual (o tiene lagunas), el script `src/fetch_inpc.py` estimará automáticamente los meses faltantes utilizando el cambio mensual promedio de los datos existentes y marcará esas filas como **estimadas** (columna `estimated = True`). Se recomienda reemplazar esas filas estimadas con los datos oficiales del INPC cuando estén disponibles.
 
-Para comenzar rápidamente, el repositorio ya incluye un archivo de ejemplo con datos sintéticos desde enero 2023 hasta el mes actual (ajustado automáticamente al ejecutar el script). Puedes reemplazarlo por los datos oficiales del INEGI cuando los tengas.
+Para comenzar rápidamente, el repositorio ya incluye un archivo de ejemplo con datos sintéticos desde enero 2023 hasta el mes actual (ajustado automáticamente al ejecutar el script). Puedes reemplazarlo por los datos oficiales del INPC cuando los tengas.
 
 ## Requisitos
 
