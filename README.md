@@ -27,8 +27,8 @@ python src/update.py
 ```
 
 Esto hará lo siguiente:
-1. Cargará y validará el CSV local (`data/inpc_raw.csv`), estimando meses faltantes si es necesario.
-2. Preprocesará los datos (garantizando frecuencia mensual y rellenando posibles huecos).
+1. Cargará y validará el CSV local (`data/inpc_raw.csv`).
+2. Preprocesará los datos (garantizando frecuencia mensual).
 3. Seleccionará automáticamente los últimos 3 años de datos para entrenar el modelo.
 4. Entrenará un modelo de regresión lineal (tiempo como predictor).
 5. Generará predicciones para los próximos 1, 2, 3, 6 y 12 meses.
