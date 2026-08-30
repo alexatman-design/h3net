@@ -1,4 +1,4 @@
-# h3net - Proyecto de predicción de inflación INPC
+# h3net - Proyecto de predicción de inflación en México basado en el INPC
 
 Este proyecto recopila datos históricos del Índice Nacional de Precios al Consumidor (INPC), entrena un modelo de regresión lineal simple (mínimos cuadrados) y predice la inflación para los próximos períodos mensual, bimestral, trimestral, semestral y anual (hasta 12 meses).
 
