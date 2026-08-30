@@ -6,7 +6,7 @@ Este proyecto recopila datos históricos del Índice Nacional de Precios al Cons
 
 El proyecto **usa un archivo CSV local** que debe colocarse en la carpeta `data/` con el nombre `inpc_raw.csv`. Este archivo debe contener al menos dos columnas: `date` (fecha) y `inpc` (valor del índice). El modelo se entrena únicamente con los últimos **36 meses** (3 años) de datos disponibles. Cada vez que se agrega un mes nuevo de datos, se elimina el mes más antiguo del conjunto, manteniendo siempre una ventana móvil de exactamente 36 meses. Esto garantiza que el modelo siempre se entrene con la información más reciente sin acumular datos indefinidamente.
 
-El proyecto está diseñado para utilizar los datos oficiales del INPC publicados por el INEGI (www.inegi.org.mx). Para comenzar rápidamente, el repositorio incluye un archivo de ejemplo con datos sintéticos desde enero 2023 hasta el mes actual. Para usar datos oficiales, reemplace este archivo con los datos del INPC obtenidos directamente del INEGI.
+El proyecto está diseñado para utilizar los datos oficiales del INPC publicados por el INEGI (www.inegi.org.mx). Para comenzar rápidamente, el repositorio incluye un archivo de ejemplo con datos desde enero 2023 hasta el mes actual. Para usar datos oficiales, reemplace este archivo con los datos del INPC obtenidos directamente del INEGI.
 
 ## Requisitos
 
