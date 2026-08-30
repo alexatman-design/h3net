@@ -1,6 +1,6 @@
 pandas
 numpy
-requests
-beautifulsoup4
 scikit-learn
 matplotlib
+joblib
+requests

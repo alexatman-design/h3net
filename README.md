@@ -4,7 +4,7 @@ Este proyecto recopila datos históricos del Índice Nacional de Precios al Cons
 
 ## Fuente de los datos
 
-El proyecto **usa un archivo CSV local** que debe colocarse en la carpeta `data/` con el nombre `inpc_raw.csv`. Este archivo debe contener al menos dos columnas: `date` (fecha) y `inpc` (valor del índice). El modelo se entrena únicamente con los últimos **3 años** de datos disponibles, de modo que siempre se utiliza la información más reciente sin necesidad de descargar grandes volúmenes cada vez.
+El proyecto **usa un archivo CSV local** que debe colocarse en la carpeta `data/` con el nombre `inpc_raw.csv`. Este archivo debe contener al menos dos columnas: `date` (fecha) y `inpc` (valor del índice). El modelo se entrena únicamente con los últimos **36 meses** (3 años) de datos disponibles. Cada vez que se agrega un mes nuevo de datos, se elimina el mes más antiguo del conjunto, manteniendo siempre una ventana móvil de exactamente 36 meses. Esto garantiza que el modelo siempre se entrene con la información más reciente sin acumular datos indefinidamente.
 
 El proyecto está diseñado para utilizar los datos oficiales del INPC publicados por el INEGI. Para comenzar rápidamente, el repositorio incluye un archivo de ejemplo con datos sintéticos desde enero 2023 hasta el mes actual. Para usar datos oficiales, reemplace este archivo con los datos del INPC obtenidos directamente del INEGI.
 
@@ -27,9 +27,9 @@ python src/update.py
 ```
 
 Esto hará lo siguiente:
-1. Cargará y validará el CSV local (`data/inpc_raw.csv`), estimando meses faltantes si es necesario.
-2. Preprocesará los datos (garantizando frecuencia mensual y rellenando posibles huecos).
-3. Seleccionará automáticamente los últimos 3 años de datos para entrenar el modelo.
+1. Cargará y validará el CSV local (`data/inpc_raw.csv`).
+2. Preprocesará los datos (garantizando frecuencia mensual).
+3. Seleccionará automáticamente los últimos 36 meses (3 años) de datos para entrenar el modelo, descartando el mes más antiguo al agregar uno nuevo.
 4. Entrenará un modelo de regresión lineal (tiempo como predictor).
 5. Generará predicciones para los próximos 1, 2, 3, 6 y 12 meses.
 6. Guardará las predicciones en `results/predictions.csv`, incluyendo:
@@ -135,9 +135,9 @@ Puedes ver la imagen directamente en GitHub bajo `results/forecast.png` o descar
 ```
 h3net/
 ├─ data/                # Aquí colocas tu CSV de INPC mensual
-│   └─ inpc_raw.csv     # CSV con columnas date,inpc,estimated (se actualiza al cargar)
+│   └─ inpc_raw.csv     # CSV con columnas date,inpc
 ├─ src/
-│   ├─ fetch_inpc.py    # Valida, carga y estima meses faltantes si es necesario
+│   ├─ fetch_inpc.py    # Valida y carga
 │   ├─ preprocess.py    # Asegura frecuencia mensual
 │   ├─ model.py         # Entrenamiento y carga del modelo de regresión lineal
 │   ├─ predict.py       # Lógica de predicción (usado por update.py y pipeline.py)
@@ -160,7 +160,7 @@ h3net/
 - **Cambiar el horizonte de predicción:** edita la lista `horizons = [1,2,3,6,12]` en `src/predict.py`, `src/pipeline.py` y `src/update.py`.
 - **Agregar características (p. ej., estacionalidad):** modifica `src/preprocess.py`.
 - **Reemplazar el modelo:** usa otro algoritmo en `src/model.py` y ajusta `src/update.py`, `src/pipeline.py` y `src/auto_update.py` según corresponda.
-- **Utilizar tu propio CSV:** coloca el archivo con tus datos mensuales en `data/inpc_raw.csv` (debe tener columnas `date` y `inpc`). El script manejará la lectura, validación y estimación de meses faltantes.
+- **Utilizar tu propio CSV:** coloca el archivo con tus datos mensuales en `data/inpc_raw.csv` (debe tener columnas `date` y `inpc`). El script manejará la lectura y validación.
 
 ## Licencia
 

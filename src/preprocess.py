@@ -33,7 +33,7 @@ def preprocess(raw_path: str, processed_path: str) -> None:
     dates = pd.date_range(start='2023-01-01', end='2025-12-01', freq='MS')
     # Simulate a CPI index with some trend and noise
     base = 100
-    trend = np.linspace(0, 12, len(dates))  # 12 points over 3 years
+    trend = np.linspace(0, 12, len(dates))  # 12 points over 3 years (36 months)
     noise = np.random.normal(0, 0.5, len(dates))
     inpc = base + trend + noise
     df = pd.DataFrame({'date': dates, 'inpc': inpc})

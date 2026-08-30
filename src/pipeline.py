@@ -1,7 +1,7 @@
 \"\"\"
 pipeline.py: Self-contained function to run the INPC prediction pipeline.
 Provides `run_predictions(csv_path=None)` which loads the CSV, preprocesses,
-trains a linear regression model on the last 3 years, predicts the next
+trains a linear regression model on the last 36 months (3 years), predicts the next
 1, 2, 3, 6, and 12 months, and saves the results to `results/predictions.csv`
 and a plot to `results/forecast.png`.
 
@@ -43,12 +43,12 @@ def _preprocess(df: pd.DataFrame) -> pd.DataFrame:
 
 def _train_model(df: pd.DataFrame):
     df = df.copy()
-    # window of last 3 years
+    # window of last 36 months (3 years)
     max_date = df['date'].iloc[-1]
-    window_start = max_date - pd.DateOffset(years=3)
+    window_start = max_date - pd.DateOffset(months=36)
     df_train = df[(df['date'] >= window_start) & (df['date'] <= max_date)].copy()
     if len(df_train) < 2:
-        raise ValueError("Not enough data in the last 3 years to train a model.")
+        raise ValueError("Not enough data in the last 36 months to train a model.")
     df_train['months'] = (df_train['date'] - df_train['date'].iloc[0]).dt.days / 30.0
     X = df_train[['months']].values
     y = df_train['inpc'].values

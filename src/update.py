@@ -4,7 +4,7 @@ update.py: Orchestrates the full pipeline for INPC inflation prediction.
 Steps:
 1. Load local INPC data (CSV) – expected to be updated by user periodically.
    The fetch_inpc function will estimate missing months if needed.
-2. Keep only the last 3 years of data for training.
+2. Keep only the last 36 months (3 years) of data for training, discarding the oldest month when a new month is added.
 3. Feature engineering: months since start of window.
 4. Train linear regression model (least squares) to predict INPC index.
 5. Predict future INPC values for next 1, 2, 3, 6 months.
@@ -130,13 +130,13 @@ def main():
     df_raw = load_and_update_data()
     # Step 2: preprocess to monthly
     df_monthly = preprocess(df_raw)
-    # Step 3: keep only last 3 years for training
+    # Step 3: keep only last 36 months (3 years) for training
     max_date = df_monthly['date'].iloc[-1]
-    window_start = max_date - pd.DateOffset(years=3)
+    window_start = max_date - pd.DateOffset(months=35)
     df_train = df_monthly[(df_monthly['date'] >= window_start) & (df_monthly['date'] <= max_date)].copy()
     print(f"Training window: {window_start.date()} to {max_date.date()} ({len(df_train)} months)")
     if len(df_train) < 2:
-        print("Not enough data in the last 3 years to train a model.")
+        print("Not enough data in the last 36 months to train a model.")
         sys.exit(1)
     # Step 4: train model
     model, baseline = train_model(df_train)
