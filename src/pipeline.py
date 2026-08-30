@@ -70,8 +70,8 @@ def _predict_future(model, baseline: pd.Timestamp, last_inpc: float, last_date: 
             'horizon_months': h,
             'base_month': base_month_str,
             'forecast_month': forecast_month_str,
-            'predicted_inpc': pred_inpc,
-            'cumulative_inflation_pct': infl
+            'predicted_inpc': round(pred_inpc, 2),
+            'cumulative_inflation_pct': round(infl, 2)
         })
     return predictions
 

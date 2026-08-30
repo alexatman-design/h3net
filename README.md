@@ -102,22 +102,22 @@ Supongamos que después de ejecutar el pipeline obtienes:
 
 ```
 horizon_months,base_month,forecast_month,predicted_inpc,cumulative_inflation_pct
-1,2026-08,2026-09,116.442928,0.199583
-2,2026-08,2026-10,116.818959,0.523159
-3,2026-08,2026-11,117.194989,0.846734
-6,2026-08,2027-02,118.323079,1.817460
-12,2026-08,2027-08,120.579259,3.758912
+1,2026-08,2026-09,116.45,0.21
+2,2026-08,2026-10,116.83,0.53
+3,2026-08,2026-11,117.21,0.86
+6,2026-08,2027-02,118.34,1.83
+12,2026-08,2027-08,120.60,3.77
 ```
 
 - **Último INPC conocido** (`base_month` = 2026-08) corresponde a **agosto 2026**.
 - La fila con `horizon_months = 1` te da el pronóstico para **septiembre 2026** (`forecast_month` = 2026-09):
-  - `predicted_inpc` = 116.44
-  - `cumulative_inflation_pct` = **+0.20 %**
-  → Se espera que entre agosto y septiembre de 2026 los precios suban aproximadamente **0,20 %**.
-- La fila con `horizon_months = 2` corresponde a **octubre 2026**, con una inflación acumulada esperada de **+0,52 %** respecto a agosto 2026.
-- La fila con `horizon_months = 3` corresponde a **noviembre 2026**, con una inflación acumulada esperada de **+0,85 %** respecto a agosto 2026.
-- La fila con `horizon_months = 6` corresponde a **febrero 2027**, con una inflación acumulada esperada de **+1,82 %** respecto a agosto 2026.
-- La fila con `horizon_months = 12` corresponde a **agosto 2027**, con una inflación acumulada esperada de **+3,76 %** respecto a agosto 2026.
+  - `predicted_inpc` = 116.45
+  - `cumulative_inflation_pct` = **+0.21 %**
+  → Se espera que entre agosto y septiembre de 2026 los precios suban aproximadamente **0,21 %**.
+- La fila con `horizon_months = 2` corresponde a **octubre 2026**, con una inflación acumulada esperada de **+0,53 %** respecto a agosto 2026.
+- La fila con `horizon_months = 3` corresponde a **noviembre 2026**, con una inflación acumulada esperada de **+0,86 %** respecto a agosto 2026.
+- La fila con `horizon_months = 6` corresponde a **febrero 2027**, con una inflación acumulada esperada de **+1,83 %** respecto a agosto 2026.
+- La fila con `horizon_months = 12` corresponde a **agosto 2027**, con una inflación acumulada esperada de **+3,77 %** respecto a agosto 2026.
 
 Un valor **negativo** en `cumulative_inflation_pct` indicaría **deflación** (caída de precios) respecto al mes de referencia.
 
