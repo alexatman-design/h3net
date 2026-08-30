@@ -135,9 +135,9 @@ Puedes ver la imagen directamente en GitHub bajo `results/forecast.png` o descar
 ```
 h3net/
 ├─ data/                # Aquí colocas tu CSV de INPC mensual
-│   └─ inpc_raw.csv     # CSV con columnas date,inpc
+│   └─ inpc_raw.csv     # CSV con columnas date,inpc,estimated (se actualiza al cargar)
 ├─ src/
-│   ├─ fetch_inpc.py    # Valida y carga
+│   ├─ fetch_inpc.py    # Valida, carga y estima meses faltantes si es necesario
 │   ├─ preprocess.py    # Asegura frecuencia mensual
 │   ├─ model.py         # Entrenamiento y carga del modelo de regresión lineal
 │   ├─ predict.py       # Lógica de predicción (usado por update.py y pipeline.py)
@@ -160,7 +160,7 @@ h3net/
 - **Cambiar el horizonte de predicción:** edita la lista `horizons = [1,2,3,6,12]` en `src/predict.py`, `src/pipeline.py` y `src/update.py`.
 - **Agregar características (p. ej., estacionalidad):** modifica `src/preprocess.py`.
 - **Reemplazar el modelo:** usa otro algoritmo en `src/model.py` y ajusta `src/update.py`, `src/pipeline.py` y `src/auto_update.py` según corresponda.
-- **Utilizar tu propio CSV:** coloca el archivo con tus datos mensuales en `data/inpc_raw.csv` (debe tener columnas `date` y `inpc`). El script manejará la lectura y validación.
+- **Utilizar tu propio CSV:** coloca el archivo con tus datos mensuales en `data/inpc_raw.csv` (debe tener columnas `date` y `inpc`). El script manejará la lectura, validación y estimación de meses faltantes.
 
 ## Licencia
 
